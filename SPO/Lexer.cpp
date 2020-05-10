@@ -11,7 +11,7 @@ bool Lexer::GenLexems() {
 
 	SkipSpaces(pos);
 
-	while (pos != RawInput.length() && ( VAR(pos) || DIGIT(pos) || ASSIGN(pos) || OP(pos) ))
+	while (pos != RawInput.length() && ( VAR(pos) || DIGIT(pos) || ASSIGN_OP(pos) || OP(pos) || LOG_OP(pos) || COMP_OP(pos) || SYMBOLS(pos)))
 		SkipSpaces(pos);
 
 	if (pos != RawInput.length()) {
@@ -70,11 +70,11 @@ bool Lexer::DIGIT(size_t &pos) {
 }
 
 //Assign operator token( '=' only)
-bool Lexer::ASSIGN(size_t &pos) {
+bool Lexer::ASSIGN_OP(size_t &pos) {
 
 	if (RawInput[pos] == '=') {
 		pos++;
-		tokens.push_back(Token("ASSIGN", "="));
+		tokens.push_back(Token("ASSIGN_OP", "="));
 		return true;
 	}
 
@@ -96,11 +96,19 @@ bool Lexer::OP(size_t &pos) {
 		break;
 
 	case '+':
-		tokens.push_back(Token("OP", "+"));
+		if (tokens.size() == 0 || tokens.back().GetType() == "L_BR" || tokens.back().GetType() == "OP")
+			tokens.push_back(Token("UNARY_OP", "+"));
+
+		else
+			tokens.push_back(Token("OP", "+"));
 		break;
 
 	case '-':
-		tokens.push_back(Token("OP", "-"));
+		if (tokens.size() == 0 || tokens.back().GetType() == "L_BR" || tokens.back().GetType() == "OP")
+			tokens.push_back(Token("UNARY_OP", "-"));
+
+		else
+			tokens.push_back(Token("OP", "-"));
 		break;
 
 	default:
@@ -111,20 +119,85 @@ bool Lexer::OP(size_t &pos) {
 	return true;
 }
 
+//Logic operator token
+bool Lexer::LOG_OP(size_t &pos) {
+
+	if (RawInput[pos] == '!') {
+		tokens.push_back(Token("UNARY_LOG_OP", "!"));
+		pos++;
+		return true;
+	}
+
+	else if (RawInput.substr(pos, 2) == "&&") {
+		tokens.push_back(Token("LOG_OP", "&&"));
+		pos += 2;
+		return true;
+	}
+
+	else if (RawInput.substr(pos, 2) == "||") {
+		tokens.push_back(Token("LOG_OP", "||"));
+		pos += 2;
+		return true;
+	}
+
+	return false;
+}
+
+bool Lexer::COMP_OP(size_t &pos) {
+
+	if (RawInput.substr(pos, 2) == "==") {
+		tokens.push_back(Token("COMP_OP", "=="));
+		pos += 2;
+		return true;
+	}
+
+	else if (RawInput.substr(pos, 2) == "<=") {
+		tokens.push_back(Token("COMP_OP", "<="));
+		pos += 2;
+		return true;
+	}
+
+	else if (RawInput.substr(pos, 2) == ">=") {
+		tokens.push_back(Token("COMP_OP", ">="));
+		pos += 2;
+		return true;
+	}
+
+	else if (RawInput.substr(pos, 2) == "!=") {
+		tokens.push_back(Token("COMP_OP", "!="));
+		pos += 2;
+		return true;
+	}
+	
+	else if (RawInput[pos] == '<') {
+		tokens.push_back(Token("COMP_OP", "<"));
+		pos++;
+		return true;
+	}
+
+	else if (RawInput[pos] == '>') {
+		tokens.push_back(Token("COMP_OP", ">"));
+		pos++;
+		return true;
+	}		
+
+	return false;
+}
+
 bool Lexer::KEYWORDS(std::string word) {
 
 	if (word == "if") {
-		tokens.push_back(Token("KEYWORD", "if"));
+		tokens.push_back(Token("IF_KW", "if"));
 		return true;
 	}
 
 	else if (word == "else") {
-		tokens.push_back(Token("KEYWORD", "else"));
+		tokens.push_back(Token("ELSE_KW", "else"));
 		return true;
 	}
 
 	else if (word == "while") {
-		tokens.push_back(Token("KEYWORD", "while"));
+		tokens.push_back(Token("WHILE_KW", "while"));
 		return true;
 	}
 

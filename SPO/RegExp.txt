@@ -1,9 +1,33 @@
-lang -> expr+
-expr -> VAR ASSIGN_OP value_expr;
+NO UNARY OPERATOR YET
+
+lang -> (assign_expr|while_expr|if_expr)+
+
+while_expr -> WHILE_KW L_BR logic_expr R_BR lang
+if_expr -> IF_KW L_BR logic_expr R_BR lang (ELSE_KW lang)?
+assign_expr -> VAR ASSIGN_OP value_expr END_ST
+
+logic_expr -> compare_expr (LOG_OP compare_expr)*
+comp_expr -> value (COMP_OP value)?
+
 value_expr -> value (OP value)*
 value -> VAR|DIGIT
 
 VAR -> [a-zA-Z_]+[a-zA-Z0-9]*
 DIGIT -> 0|([1-9][0-9]*)
+
 ASSIGN_OP -> =
+
 OP -> +|-|*|/
+UNARY_OP -> -
+
+LOG_OP -> && | ||
+UNARY_LOG_OP -> !
+COMP_OP -> >|<|==|>=|<=|!=
+
+L_BR -> (
+R_BR -> )
+END_ST -> ;
+
+IF_KW -> if
+ELSE_KW -> else
+WHILE_KW -> while
