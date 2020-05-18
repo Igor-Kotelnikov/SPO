@@ -1,5 +1,11 @@
 #include "Token.h"
 
+Token::Token() {
+
+	this->TokenType = "NO_DEF";
+	this->val = "null";
+}
+
 Token::Token(std::string type, std::string value) {
 
 	this->TokenType = type;
@@ -9,6 +15,14 @@ Token::Token(std::string type, std::string value) {
 std::string Token::GetType() { return this->TokenType; }
 
 std::string Token::GetValue() { return this->val; }
+
+Token& Token::operator= (const Token &tk) {
+
+	this->TokenType = tk.TokenType;
+	this->val = tk.val;
+
+	return *this;
+}
 
 std::ostream& operator << (std::ostream& os, const Token& tk) {
 

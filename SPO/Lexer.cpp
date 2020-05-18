@@ -215,6 +215,14 @@ bool Lexer::SYMBOLS(size_t &pos) {
 	case ')':
 		tokens.push_back(Token("R_BR", ")"));
 		break;
+	
+	case '{':
+		tokens.push_back(Token("L_FIG", "{"));
+		break;
+
+	case '}':
+		tokens.push_back(Token("R_FIG", "}"));
+		break;
 
 	case ';':
 		tokens.push_back(Token("END_ST", ";"));
