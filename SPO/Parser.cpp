@@ -51,14 +51,7 @@ bool Parser::assign_expr(std::list<Token>::iterator &lex_pos) {
 	auto start = lex_pos;
 
 	if (!VAR(lex_pos))
-		return false;
-
-	if (variables.find((*start).GetValue()) == variables.end())
-		if (!variables.insert({ (*start).GetValue(), 0 }).second) {
-			std::cout << "Variable initialization error";
-			return false;
-		}
-			
+		return false;			
 
 	if (!ASSIGN_OP(lex_pos)) {
 		return false;
@@ -209,16 +202,9 @@ bool Parser::value(std::list<Token>::iterator &lex_pos) {
 
 	auto prev = lex_pos;
 
-	if (VAR(lex_pos)) {
-
-		if (variables.find(prev->GetValue()) == variables.end()) {
-
-			std::cout << "Variable accessing error";
-			return false;
-		}
-
+	if (VAR(lex_pos)) 
 		return true;
-	}
+	
 
 	if ( !DIGIT(lex_pos))
 		return false;
@@ -407,10 +393,6 @@ bool Parser::R_FIG(std::list<Token>::iterator &lex_pos) {
 	}
 
 	return false;
-}
-
-std::unordered_map<std::string, int> Parser::GetVariableHash() {
-	return variables;
 }
 
 Parser::~Parser() {}

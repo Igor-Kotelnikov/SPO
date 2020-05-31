@@ -49,7 +49,6 @@ public:
 
 	Parser(std::list<Token> token_list);
 	bool CheckSyntax();
-	std::unordered_map<std::string, int> GetVariableHash();
 	~Parser();
 
 };

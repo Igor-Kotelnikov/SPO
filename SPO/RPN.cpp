@@ -1,9 +1,7 @@
 #include "RPN.h"
 
-RPN::RPN(std::list<Token> correct_list, std::unordered_map<std::string, int> vars) {
-
-	this->variables = vars;
-
+RPN::RPN(std::list<Token> correct_list) {
+	
 	std::stack<Token> operators;	
 
 	std::stack<std::list<Token>::iterator> jump_pos;
@@ -522,7 +520,18 @@ bool RPN::Computation() {
 				p2 = Value(operands.top());
 				operands.pop();
 
-				variables.find(operands.top().GetValue())->second = p2;
+				if (variables.find(operands.top().GetValue()) == variables.end()) {
+					if (!variables.insert({ operands.top().GetValue(), p2 }).second) {
+
+						std::cout << "Variable initialization error" << std::endl;
+						return false;
+					}
+				}
+
+				else
+					variables.find(operands.top().GetValue())->second = p2;
+
+
 				operands.pop();
 			}
 
@@ -530,6 +539,11 @@ bool RPN::Computation() {
 		}
 
 	}
+
+	std::cout << std::endl;
+
+	for (auto &var : variables)
+		std::cout << var.first << " = " << var.second << std::endl;
 
 	return true;
 }

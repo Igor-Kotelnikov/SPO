@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 	if (!parser.CheckSyntax())
 		return 2;
 	
-	RPN rpn(lexer.GetTokens(), parser.GetVariableHash());
+	RPN rpn(lexer.GetTokens());
 	if (!rpn.Computation())
 		return 3;
 		

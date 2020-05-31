@@ -23,7 +23,7 @@ private:
 
 public:
 
-	RPN(std::list<Token> correct_list, std::unordered_map<std::string, int> vars);
+	RPN(std::list<Token> correct_list);
 	bool Computation();
 	~RPN();
 };
