@@ -22,6 +22,11 @@ private:
 	bool value_expr(std::list<Token>::iterator &lex_pos);
 	bool logic_expr(std::list<Token>::iterator &lex_pos);
 	bool comp_expr(std::list<Token>::iterator &lex_pos);
+	bool list_expr(std::list<Token>::iterator &lex_pos);
+
+	bool NO_ARG_LIST_FUNC(std::list<Token>::iterator &lex_pos);
+	bool ONE_ARG_LIST_FUNC(std::list<Token>::iterator &lex_pos);
+	bool TWO_ARG_LIST_FUNC(std::list<Token>::iterator &lex_pos);
 
 	bool value(std::list<Token>::iterator &lex_pos);
 
@@ -44,6 +49,11 @@ private:
 
 	bool L_FIG(std::list<Token>::iterator &lex_pos);
 	bool R_FIG(std::list<Token>::iterator &lex_pos);
+
+	bool POINT(std::list<Token>::iterator &lex_pos);
+	bool COMMA(std::list<Token>::iterator &lex_pos);
+
+	bool WordCheck(std::list<Token>::iterator &lex_pos, std::string word);
 
 public:
 

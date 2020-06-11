@@ -34,8 +34,10 @@ bool Parser::lang(std::list<Token>::iterator &lex_pos) {
 			lex_pos = start;
 
 			if (!while_expr(lex_pos)) {
-
-				return false;
+				lex_pos = start;
+				
+				if (!list_expr(lex_pos))
+					return false;
 			}
 		}
 	}
@@ -50,12 +52,8 @@ bool Parser::assign_expr(std::list<Token>::iterator &lex_pos) {
 
 	auto start = lex_pos;
 
-	if (!VAR(lex_pos))
-		return false;			
-
-	if (!ASSIGN_OP(lex_pos)) {
-		return false;
-	}
+	if (!VAR(lex_pos) || !ASSIGN_OP(lex_pos))
+		return false;	
 
 	if (value_expr(lex_pos)) {
 
@@ -70,15 +68,23 @@ bool Parser::assign_expr(std::list<Token>::iterator &lex_pos) {
 
 bool Parser::value_expr(std::list<Token>::iterator &lex_pos) {
 
-	if (lex_pos == tokens.end())
-		return false;
+	auto start = lex_pos;
 
-	if (!value(lex_pos))
+	if (lex_pos == tokens.end())
+		return false;		
+
+	if (!value(lex_pos) && (!L_BR(lex_pos) || !value_expr(lex_pos) || !R_BR(lex_pos))) {
+
+		lex_pos = start;
 		return false;
+	}
 
 	while (OP(lex_pos))
-		if (!value(lex_pos))
-			return false;	
+		if (!value_expr(lex_pos)) {
+
+			lex_pos = start;
+			return false;
+		}
 
 	return true;
 }
@@ -117,7 +123,7 @@ bool Parser::if_expr(std::list<Token>::iterator &lex_pos) {
 bool Parser::else_expr(std::list<Token>::iterator &lex_pos) {
 
 	if (lex_pos == tokens.end())
-		return false;
+		return true;
 
 	if (ELSE_KW(lex_pos)) {
 
@@ -162,37 +168,57 @@ bool Parser::while_expr(std::list<Token>::iterator &lex_pos) {
 	return true;
 }
 
+bool Parser::list_expr(std::list<Token>::iterator &lex_pos) {
+
+	if (!VAR(lex_pos) || !POINT(lex_pos) || (!NO_ARG_LIST_FUNC(lex_pos) && !ONE_ARG_LIST_FUNC(lex_pos) && !TWO_ARG_LIST_FUNC(lex_pos)) || !END_ST(lex_pos))
+		return false;
+
+	return true;
+}
+
 bool Parser::logic_expr(std::list<Token>::iterator &lex_pos) {
+
+	auto start = lex_pos;
 
 	if (lex_pos == tokens.end())
 		return false;
 
-	if (comp_expr(lex_pos)) {
+	if (!comp_expr(lex_pos) && (!L_BR(lex_pos) || !logic_expr(lex_pos) || !R_BR(lex_pos))) {
 
-		while (LOG_OP(lex_pos))
-			if (!comp_expr(lex_pos))
-				return false;
-
-		return true;
+		lex_pos = start;
+		return false;
 	}
 
-	return false;
+	while (LOG_OP(lex_pos))
+		if (!comp_expr(lex_pos)) {
+
+			lex_pos = start;
+			return false;
+		}
+
+	return true;
 }
 
 bool Parser::comp_expr(std::list<Token>::iterator &lex_pos) {
 
+	auto start = lex_pos;
+
 	if (lex_pos == tokens.end())
 		return false;
 
-	if (value_expr(lex_pos)) {
+	if (!value_expr(lex_pos)) {
 
-		if (COMP_OP(lex_pos) && !value_expr(lex_pos))
-			return false;
-		
-		return true;
+		lex_pos = start;
+		return false;
 	}
 
-	return false;
+	if (COMP_OP(lex_pos) && !value_expr(lex_pos)) {
+
+		lex_pos = start;
+		return false;
+	}
+		
+	return true;
 }
 
 bool Parser::value(std::list<Token>::iterator &lex_pos) {
@@ -200,16 +226,29 @@ bool Parser::value(std::list<Token>::iterator &lex_pos) {
 	if (lex_pos == tokens.end())
 		return false;
 
-	auto prev = lex_pos;
+	if (VAR(lex_pos) && POINT(lex_pos)) {
+		
+		auto start = lex_pos;
 
-	if (VAR(lex_pos)) 
+		if (WordCheck(lex_pos, "get") && L_BR(lex_pos) && value_expr(lex_pos) && R_BR(lex_pos))
+			return true;
+
+		else lex_pos = start;
+
+		if (WordCheck(lex_pos, "get_size") && L_BR(lex_pos) && R_BR(lex_pos))
+			return true;
+
+		return false;
+	}
+
+	if (VAR(lex_pos))
+		return true;
+	
+	if (DIGIT(lex_pos))
 		return true;
 	
 
-	if ( !DIGIT(lex_pos))
-		return false;
-
-	return true;
+	return false;
 }
 
 bool Parser::IF_KW(std::list<Token>::iterator &lex_pos) {
@@ -246,6 +285,50 @@ bool Parser::WHILE_KW(std::list<Token>::iterator &lex_pos) {
 	if (lex_pos->GetType() == "WHILE_KW") {
 		++lex_pos;
 		return true;
+	}
+
+	return false;
+}
+
+bool Parser::NO_ARG_LIST_FUNC(std::list<Token>::iterator &lex_pos) {
+
+	if (lex_pos == tokens.end())
+		return false;
+
+	if (lex_pos->GetType() == "NO_ARG_LIST_FUNC") {
+		++lex_pos;
+		if (L_BR(lex_pos) && R_BR(lex_pos))
+			return true;
+	}
+
+	return false;
+}
+
+bool Parser::ONE_ARG_LIST_FUNC(std::list<Token>::iterator &lex_pos) {
+
+	if (lex_pos == tokens.end())
+		return false;
+
+	if (lex_pos->GetType() == "ONE_ARG_LIST_FUNC") {
+		++lex_pos;
+
+		if (L_BR(lex_pos) && value_expr(lex_pos) && R_BR(lex_pos))
+			return true;
+	}
+
+	return false;
+}
+
+bool Parser::TWO_ARG_LIST_FUNC(std::list<Token>::iterator &lex_pos) {
+
+	if (lex_pos == tokens.end())
+		return false;
+
+	if (lex_pos->GetType() == "TWO_ARG_LIST_FUNC") {
+		++lex_pos;
+		
+		if (L_BR(lex_pos) && value_expr(lex_pos) && COMMA(lex_pos) && value_expr(lex_pos) && R_BR(lex_pos))
+			return true;
 	}
 
 	return false;
@@ -388,6 +471,42 @@ bool Parser::R_FIG(std::list<Token>::iterator &lex_pos) {
 		return false;
 
 	if (lex_pos->GetType() == "R_FIG") {
+		++lex_pos;
+		return true;
+	}
+
+	return false;
+}
+
+bool Parser::POINT(std::list<Token>::iterator &lex_pos) {
+
+	if (lex_pos == tokens.end())
+		return false;
+
+	if (lex_pos->GetType() == "POINT") {
+		++lex_pos;
+		return true;
+	}
+
+	return false;
+}
+
+bool Parser::COMMA(std::list<Token>::iterator &lex_pos) {
+
+	if (lex_pos == tokens.end())
+		return false;
+
+	if (lex_pos->GetType() == "COMMA") {
+		++lex_pos;
+		return true;
+	}
+
+	return false;
+}
+
+bool Parser::WordCheck(std::list<Token>::iterator &lex_pos, std::string word) {
+
+	if (lex_pos->GetValue() == word) {
 		++lex_pos;
 		return true;
 	}

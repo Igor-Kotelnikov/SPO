@@ -19,6 +19,9 @@ bool Lexer::GenLexems() {
 		return false;
 	}
 
+	for (auto const &p : tokens)
+		std::cout << p << std::endl;
+
 	return true;
 }
 
@@ -201,6 +204,51 @@ bool Lexer::KEYWORDS(std::string word) {
 		return true;
 	}
 
+	else if (word == "create_list") {
+		tokens.push_back(Token("NO_ARG_LIST_FUNC", "create_list"));
+		return true;
+	}
+
+	else if (word == "pop_back") {
+		tokens.push_back(Token("NO_ARG_LIST_FUNC", "pop_back"));
+		return true;
+	}
+
+	else if (word == "pop_front") {
+		tokens.push_back(Token("NO_ARG_LIST_FUNC", "pop_front"));
+		return true;
+	}
+
+	else if (word == "get_size") {
+		tokens.push_back(Token("NO_ARG_LIST_FUNC", "get_size"));
+		return true;
+	}
+
+	else if (word == "push_back") {
+		tokens.push_back(Token("ONE_ARG_LIST_FUNC", "push_back"));
+		return true;
+	}
+
+	else if (word == "push_front") {
+		tokens.push_back(Token("ONE_ARG_LIST_FUNC", "push_front"));
+		return true;
+	}
+
+	else if (word == "get") {
+		tokens.push_back(Token("ONE_ARG_LIST_FUNC", "get"));
+		return true;
+	}
+
+	else if (word == "remove") {
+		tokens.push_back(Token("ONE_ARG_LIST_FUNC", "remove"));
+		return true;
+	}
+
+	else if (word == "insert") {
+		tokens.push_back(Token("TWO_ARG_LIST_FUNC", "insert"));
+		return true;
+	}
+
 	return false;
 }
 
@@ -228,6 +276,14 @@ bool Lexer::SYMBOLS(size_t &pos) {
 		tokens.push_back(Token("END_ST", ";"));
 		break;
 
+	case '.':
+		tokens.push_back(Token("POINT", "."));
+		break;
+	
+	case ',':
+		tokens.push_back(Token("COMMA", ","));
+		break;
+
 	default:
 		return false;
 	}
@@ -238,7 +294,7 @@ bool Lexer::SYMBOLS(size_t &pos) {
 
 void Lexer::SkipSpaces(size_t &pos) {
 
-	while (RawInput[pos] == '/t' || RawInput[pos] == ' ' || RawInput[pos] == '/n')
+	while (RawInput[pos] == '\t' || RawInput[pos] == ' ' || RawInput[pos] == '\n')
 		pos++;
 }
 

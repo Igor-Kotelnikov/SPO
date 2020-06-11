@@ -37,6 +37,20 @@ RPN::RPN(std::list<Token> correct_list) {
 				operators.pop();
 			}
 
+			if (operators.top().GetType() == "NO_ARG_LIST_FUNC" || operators.top().GetType() == "ONE_ARG_LIST_FUNC" || operators.top().GetType() == "TWO_ARG_LIST_FUNC") {
+
+				RPN_List.push_back(operators.top());
+				operators.pop();
+			}
+		}
+
+		else if (cur.GetType() == "COMMA") {
+
+			while (operators.top().GetValue() != "(") {
+
+				RPN_List.push_back(operators.top());
+				operators.pop();
+			}
 		}
 
 		else if (cur.GetType() == "R_FIG") {
@@ -175,19 +189,22 @@ RPN::RPN(std::list<Token> correct_list) {
 			}
 		}		
 
-		else {
+		else if (cur.GetType() != "POINT") {
 		
-			if (cur.GetType() == "IF_KW" || cur.GetType() == "WHILE_KW") {
+		if (cur.GetType() == "IF_KW" || cur.GetType() == "WHILE_KW") {
 
-				keywords.push(cur);
-				bodies.push(false);
-				int_pos.push(RPN_List.size());
-				RPN_List.push_back(Token("VAR", "p"));
-				jump_pos.push(--RPN_List.end());
+			keywords.push(cur);
+			bodies.push(false);
+			int_pos.push(RPN_List.size());
+			RPN_List.push_back(Token("VAR", "p"));
+			jump_pos.push(--RPN_List.end());
 
-				operators.push(cur);
-			}
-			
+			operators.push(cur);
+		}
+
+		else if (cur.GetType() == "NO_ARG_LIST_FUNC" || cur.GetType() == "ONE_ARG_LIST_FUNC" || cur.GetType() == "TWO_ARG_LIST_FUNC")
+			operators.push(cur);
+
 			else {
 
 				while (!operators.empty() && Priority(cur) <= Priority(operators.top())) {
@@ -206,7 +223,7 @@ RPN::RPN(std::list<Token> correct_list) {
 
 	std::cout << std::endl << std::endl;
 	for (auto & tk : RPN_List)
-		std::cout << tk << " ";
+		std::cout << tk << std::endl;
 
 }
 
@@ -244,6 +261,7 @@ bool RPN::Computation() {
 	std::stack<Token> operands;
 	
 	int p1, p2;
+	bool correct_access = true;
 
 	auto pos = RPN_List.begin();
 
@@ -302,17 +320,221 @@ bool RPN::Computation() {
 				
 		}
 
+		else if (cur.GetType() == "NO_ARG_LIST_FUNC"){
+
+			if (cur.GetValue() == "create_list") {
+
+				if (list_vars.find(operands.top().GetValue()) == list_vars.end())
+					if (!list_vars.insert({ operands.top().GetValue(), LinkedList() }).second || variables.find(operands.top().GetValue()) != variables.end()) {
+
+						std::cout << "List variable initialization error";
+						return false;
+					}
+			}
+
+			if (cur.GetValue() == "pop_front") {
+
+				if (list_vars.find(operands.top().GetValue()) == list_vars.end()) {
+
+					std::cout << "List variable access error";
+					return false;
+				}
+
+				if (!list_vars.at(operands.top().GetValue()).getSize()) {
+
+					std::cout << "List function access error";
+					return false;
+				}
+
+				list_vars.at(operands.top().GetValue()).pop_front();	
+				operands.pop();
+			}
+
+			if (cur.GetValue() == "pop_back") {
+
+				if (list_vars.find(operands.top().GetValue()) == list_vars.end()) {
+
+					std::cout << "List variable access error";
+					return false;
+				}
+
+				if (!list_vars.at(operands.top().GetValue()).getSize()) {
+
+					std::cout << "List function access error";
+					return false;
+				}
+
+				list_vars.at(operands.top().GetValue()).pop_back();
+				operands.pop();
+			}
+
+			if (cur.GetValue() == "get_size") {
+
+				if (list_vars.find(operands.top().GetValue()) == list_vars.end()) {
+
+					std::cout << "List variable access error";
+					return false;
+				}
+
+				p1 = list_vars.at(operands.top().GetValue()).getSize();
+				operands.pop();
+				operands.push(Token("DIGIT", std::to_string(p1)));
+			}
+
+			++pos;
+		}
+
+		else if (cur.GetType() == "ONE_ARG_LIST_FUNC") {
+
+			if (cur.GetValue() == "push_back") {
+
+				p1 = Value(operands.top(), correct_access);
+				operands.pop();
+
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
+
+				if (list_vars.find(operands.top().GetValue()) == list_vars.end()) {
+
+					std::cout << "List variable access error";
+					return false;
+				}
+
+				list_vars.at(operands.top().GetValue()).push_back(p1);
+				operands.pop();
+			}
+
+			if (cur.GetValue() == "push_front") {
+
+				p1 = Value(operands.top(), correct_access);
+				operands.pop();
+
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
+
+				if (list_vars.find(operands.top().GetValue()) == list_vars.end()) {
+
+					std::cout << "List variable access error";
+					return false;
+				}
+
+				list_vars.at(operands.top().GetValue()).push_front(p1);
+				operands.pop();
+			}
+
+			if (cur.GetValue() == "get") {
+
+				p1 = Value(operands.top(), correct_access);
+				operands.pop();
+
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
+
+				if (list_vars.find(operands.top().GetValue()) == list_vars.end()) {
+
+					std::cout << "List variable access error";
+					return false;
+				}
+
+
+				if (p1 < 0 || p1 >= list_vars.at(operands.top().GetValue()).getSize()) {
+
+					std::cout << "List function access error";
+					return false;
+				}
+
+				p1 = list_vars.at(operands.top().GetValue()).get(p1);
+				operands.pop();
+				operands.push(Token("DIGIT", std::to_string(p1)));
+			}
+
+			if (cur.GetValue() == "remove") {
+
+				p1 = Value(operands.top(), correct_access);
+				operands.pop();
+
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
+				
+				if (list_vars.find(operands.top().GetValue()) == list_vars.end()) {
+
+					std::cout << "List variable access error";
+					return false;
+				}
+
+
+				if (p1 < 0 || p1 >= list_vars.at(operands.top().GetValue()).getSize()) {
+
+					std::cout << "List function access error";
+					return false;
+				}
+
+				list_vars.at(operands.top().GetValue()).remove(p1);
+				operands.pop();
+
+			}
+
+			++pos;
+		}
+
+		else if (cur.GetType() == "TWO_ARG_LIST_FUNC") {
+
+			if (cur.GetValue() == "insert") {
+
+				p1 = Value(operands.top(), correct_access);
+				operands.pop();
+
+				p2 = Value(operands.top(), correct_access);
+				operands.pop();
+
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
+
+				if (list_vars.find(operands.top().GetValue()) == list_vars.end()) {
+
+					std::cout << "List variable access error";
+					return false;
+				}
+
+				if (p2 < 0 || p2 >= list_vars.at(operands.top().GetValue()).getSize()) {
+
+					std::cout << "List function access error";
+					return false;
+				}
+
+				list_vars.at(operands.top().GetValue()).insert(p2, p1);
+				operands.pop();
+			}
+
+			++pos;
+		}
+
 		else {
 
 			//Math binary ops
 
 			if (cur.GetValue() == "*") {
 				
-				p2 = Value(operands.top());
+				p2 = Value(operands.top(), correct_access);
+				operands.pop();			
+
+				p1 = Value(operands.top(), correct_access);
 				operands.pop();
 
-				p1 = Value(operands.top());
-				operands.pop();
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
 
 				if (p1 > std::numeric_limits<int>::max() / p2) {
 					std::cout << "Computation error";
@@ -324,11 +546,16 @@ bool RPN::Computation() {
 
 			if (cur.GetValue() == "/") {
 
-				p2 = Value(operands.top());
+				p2 = Value(operands.top(), correct_access);
 				operands.pop();
 
-				p1 = Value(operands.top());
+				p1 = Value(operands.top(), correct_access);
 				operands.pop();
+
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
 
 				if (!p2) {
 					std::cout << "Computation error";
@@ -340,11 +567,16 @@ bool RPN::Computation() {
 
 			if (cur.GetValue() == "+" && cur.GetType() == "OP") {
 
-				p2 = Value(operands.top());
+				p2 = Value(operands.top(), correct_access);
 				operands.pop();
 
-				p1 = Value(operands.top());
+				p1 = Value(operands.top(), correct_access);
 				operands.pop();
+
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
 
 				if ((p1 > 0 && p2 > 0 && p1 > std::numeric_limits<int>::max()-p2) || (p1 < 0 && p2 < 0 && p1 < std::numeric_limits<int>::min() - p2)) {
 					std::cout << "Computation error";
@@ -356,11 +588,16 @@ bool RPN::Computation() {
 
 			if (cur.GetValue() == "-" && cur.GetType() == "OP") {
 
-				p2 = Value(operands.top());
+				p2 = Value(operands.top(), correct_access);
 				operands.pop();
 
-				p1 = Value(operands.top());
+				p1 = Value(operands.top(), correct_access);
 				operands.pop();
+
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
 
 				if ((p1 > 0 && p2 < 0 && p1 > std::numeric_limits<int>::max() + p2) || (p1 < 0 && p2 > 0 && p1 < std::numeric_limits<int>::min() + p2)) {
 					std::cout << "Computation error";
@@ -374,16 +611,26 @@ bool RPN::Computation() {
 
 			if (cur.GetValue() == "+" && cur.GetType() == "UNARY_OP") {
 
-				p2 = Value(operands.top());
+				p2 = Value(operands.top(), correct_access);
 				operands.pop();			
+
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
 
 				operands.push(Token("DIGIT", std::to_string(+p2)));
 			}
 
-			if (cur.GetValue() == "-") {
+			if (cur.GetValue() == "-" && cur.GetType() == "UNARY_OP") {
 
-				p2 = Value(operands.top());
+				p2 = Value(operands.top(), correct_access);
 				operands.pop();
+
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
 
 				operands.push(Token("DIGIT", std::to_string(-p2)));
 			}
@@ -392,11 +639,16 @@ bool RPN::Computation() {
 
 			if (cur.GetValue() == "<") {
 
-				p2 = Value(operands.top());
+				p2 = Value(operands.top(), correct_access);
 				operands.pop();
 
-				p1 = Value(operands.top());
+				p1 = Value(operands.top(), correct_access);
 				operands.pop();
+
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
 
 				if (p1 < p2)
 					operands.push(Token("DIGIT", "1"));
@@ -406,11 +658,16 @@ bool RPN::Computation() {
 
 			if (cur.GetValue() == "<=") {
 
-				p2 = Value(operands.top());
+				p2 = Value(operands.top(), correct_access);
 				operands.pop();
 
-				p1 = Value(operands.top());
+				p1 = Value(operands.top(), correct_access);
 				operands.pop();
+
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
 
 				if (p1 <= p2)
 					operands.push(Token("DIGIT", "1"));
@@ -420,11 +677,16 @@ bool RPN::Computation() {
 
 			if (cur.GetValue() == ">") {
 
-				p2 = Value(operands.top());
+				p2 = Value(operands.top(), correct_access);
 				operands.pop();
 
-				p1 = Value(operands.top());
+				p1 = Value(operands.top(), correct_access);
 				operands.pop();
+
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
 
 				if (p1 > p2)
 					operands.push(Token("DIGIT", "1"));
@@ -434,11 +696,16 @@ bool RPN::Computation() {
 
 			if (cur.GetValue() == ">=") {
 
-				p2 = Value(operands.top());
+				p2 = Value(operands.top(), correct_access);
 				operands.pop();
 
-				p1 = Value(operands.top());
+				p1 = Value(operands.top(), correct_access);
 				operands.pop();
+
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
 
 				if (p1 >= p2)
 					operands.push(Token("DIGIT", "1"));
@@ -448,11 +715,16 @@ bool RPN::Computation() {
 
 			if (cur.GetValue() == "==") {
 
-				p2 = Value(operands.top());
+				p2 = Value(operands.top(), correct_access);
 				operands.pop();
 
-				p1 = Value(operands.top());
+				p1 = Value(operands.top(), correct_access);
 				operands.pop();
+
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
 
 				if (p1 == p2)
 					operands.push(Token("DIGIT", "1"));
@@ -462,11 +734,16 @@ bool RPN::Computation() {
 
 			if (cur.GetValue() == "!=") {
 
-				p2 = Value(operands.top());
+				p2 = Value(operands.top(), correct_access);
 				operands.pop();
 
-				p1 = Value(operands.top());
+				p1 = Value(operands.top(), correct_access);
 				operands.pop();
+
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
 
 				if (p1 != p2)
 					operands.push(Token("DIGIT", "1"));
@@ -477,11 +754,16 @@ bool RPN::Computation() {
 
 			if (cur.GetValue() == "&&") {
 
-				p2 = Value(operands.top());
+				p2 = Value(operands.top(), correct_access);
 				operands.pop();
 
-				p1 = Value(operands.top());
+				p1 = Value(operands.top(), correct_access);
 				operands.pop();
+
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
 
 				if (p1 && p2)
 					operands.push(Token("DIGIT", "1"));
@@ -491,11 +773,16 @@ bool RPN::Computation() {
 
 			if (cur.GetValue() == "||") {
 
-				p2 = Value(operands.top());
+				p2 = Value(operands.top(), correct_access);
 				operands.pop();
 
-				p1 = Value(operands.top());
+				p1 = Value(operands.top(), correct_access);
 				operands.pop();
+
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
 
 				if (p1 || p2)
 					operands.push(Token("DIGIT", "1"));
@@ -507,9 +794,13 @@ bool RPN::Computation() {
 
 			if (cur.GetValue() == "!") {
 
-				p2 = Value(operands.top());
+				p2 = Value(operands.top(), correct_access);
 				operands.pop();
 
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
 
 				operands.push(Token("DIGIT", std::to_string(!p2)));
 			}
@@ -517,11 +808,16 @@ bool RPN::Computation() {
 			//Assign op
 			if (cur.GetValue() == "=") {
 
-				p2 = Value(operands.top());
+				p2 = Value(operands.top(), correct_access);
 				operands.pop();
 
+				if (!correct_access) {
+					std::cout << "variable access error";
+					return false;
+				}
+
 				if (variables.find(operands.top().GetValue()) == variables.end()) {
-					if (!variables.insert({ operands.top().GetValue(), p2 }).second) {
+					if (!variables.insert({ operands.top().GetValue(), p2 }).second || list_vars.find(operands.top().GetValue()) != list_vars.end()) {
 
 						std::cout << "Variable initialization error" << std::endl;
 						return false;
@@ -545,16 +841,29 @@ bool RPN::Computation() {
 	for (auto &var : variables)
 		std::cout << var.first << " = " << var.second << std::endl;
 
+	for (auto &list_var : list_vars) {
+		std::cout << "List " << list_var.first << " contains:" << std::endl;
+		for (int i = 0; i < list_var.second.getSize(); i++) {
+			std::cout << list_var.second.get(i) << std::endl;
+		}
+	}
+
 	return true;
 }
 
-int RPN::Value(Token tk) {
+int RPN::Value(Token tk, bool &abort_flag) {
 
 	if (tk.GetType() == "DIGIT")
 		return std::stoi(tk.GetValue());
 
 	else
-		return variables.at(tk.GetValue());
+		if (variables.find(tk.GetValue()) != variables.end())
+			return variables.at(tk.GetValue());
+		else {
+			abort_flag = false;
+			return 0;
+		}
+
 }
 
 RPN::~RPN() {}
