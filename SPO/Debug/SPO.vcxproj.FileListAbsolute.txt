@@ -1,0 +1,2 @@
+D:\Visual Studio\repos\SPO\Debug\SPO.exe
+D:\Visual Studio\repos\SPO\Debug\SPO.pdb

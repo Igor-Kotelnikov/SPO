@@ -1,0 +1,1 @@
+﻿D:\Visual Studio\repos\SPO\SPO.vcxproj(48,3): error MSB4019: импортированный проект "D:\Visual Studio\IDE\MSBuild\Microsoft\VC\v160\Microsoft.Cpp.Default.props" не найден. Проверьте правильность выражения в объявлении Import "D:\Visual Studio\IDE\MSBuild\Microsoft\VC\v160\\Microsoft.Cpp.Default.props" и наличие файла на диске.

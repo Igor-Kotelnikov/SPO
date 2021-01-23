@@ -1,0 +1,31 @@
+define int Factorial1(n){
+
+	if (n < 2)
+		return 1;
+
+	return n * Factorial1(n-1);
+}
+
+define int Factorial2(n){
+
+	factorial = 1;
+
+	while (n > 1){
+	
+		factorial = factorial * n;
+		n = n - 1;
+	}
+
+	return factorial;
+}
+
+main(){
+
+	number_first_factorial = Factorial1(5);
+	number_second_factorial = Factorial2(6-1);
+
+	x = 5;
+
+	x_second_factorial = Factorial2(x);
+	x_first_factorial = Factorial1(x);
+}

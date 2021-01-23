@@ -9,13 +9,48 @@ bool Parser::CheckSyntax() {
 
 	auto pos = tokens.begin();
 	
-	while (lang(pos) && pos != tokens.end());
+	if (!func_define(pos) || !main_define(pos))
+		return false;
 	
 	if (pos != tokens.end()) {
 
 		std::cout << "Parser error" << std::endl;
 		return false;
 	}
+
+	return true;
+}
+
+bool Parser::func_define(std::list<Token>::iterator& lex_pos) {
+
+	while (1) {
+
+		auto start = lex_pos;
+		if (!func_init_expr(lex_pos))
+			if (lex_pos != start)
+				return false;
+			else
+				return true;
+	}
+}
+
+bool Parser::main_define(std::list<Token>::iterator& lex_pos) {
+
+	if (!MAIN_KW(lex_pos) || !L_BR(lex_pos) || !R_BR(lex_pos) || !L_FIG(lex_pos))
+		return false;
+
+	while (1) {
+
+		auto start = lex_pos;
+		if (!lang(lex_pos))
+			if (lex_pos != start)
+				return false;
+			else
+				break;
+	}
+
+	if (!R_FIG(lex_pos))
+		return false;
 
 	return true;
 }
@@ -28,20 +63,122 @@ bool Parser::lang(std::list<Token>::iterator &lex_pos) {
 	auto start = lex_pos;
 	
 	if (!assign_expr(lex_pos)) {
-		lex_pos = start;
+		if (lex_pos != start)
+			return false;
+	}
 
-		if (!if_expr(lex_pos)) {
-			lex_pos = start;
+	else
+		return true;
 
-			if (!while_expr(lex_pos)) {
-				lex_pos = start;
-				
-				if (!list_expr(lex_pos))
-					return false;
-			}
+	if (!if_expr(lex_pos)) {
+		if (lex_pos != start)
+			return false;
+	}
+
+	else
+		return true;
+
+	if (!while_expr(lex_pos)) {
+		if (lex_pos != start)
+			return false;
+	}
+
+	else
+		return true;
+
+	if (!return_expr(lex_pos)) {
+		if (lex_pos != start)
+			return false;
+	}
+
+	else
+		return true;
+
+	return false;
+}
+
+bool Parser::func_init_expr(std::list<Token>::iterator& lex_pos) {
+
+	if (lex_pos == tokens.end())
+		return false;
+
+	auto start = lex_pos;
+
+	if (!DEFINE_KW(lex_pos) || !DATA_TYPE(lex_pos) || !FUNCTION(lex_pos) || !L_BR(lex_pos) || !args_init_expr(lex_pos) || !R_BR(lex_pos) || !L_FIG(lex_pos))
+		return false;
+
+	while (1) {
+
+		start = lex_pos;
+
+		if (!lang(lex_pos))
+			if (lex_pos != start)
+				return false;
+			else
+				break;
+	}
+
+	if (!R_FIG(lex_pos))
+		return false;
+
+	return true;	
+}
+
+bool Parser::args_init_expr(std::list<Token>::iterator& lex_pos) {
+
+	if (lex_pos == tokens.end())
+		return false;
+
+	auto start = lex_pos;
+	CurrentFunctionArgumentsCounter = 0;
+
+	if (VAR(lex_pos)) {
+
+		CurrentFunctionArgumentsCounter++;
+
+		while (COMMA(lex_pos)) {
+			
+			CurrentFunctionArgumentsCounter++;
+
+			if (!VAR(lex_pos))
+				return false;
 		}
 	}
 	
+	if (!FunctionsArgumentsNumber.insert({ CurrentFunctionName, CurrentFunctionArgumentsCounter }).second) {
+
+		std::cout << "Unable to remember number of arguments for function" << std::endl;
+		return false;
+	}
+
+	return true;
+}
+
+bool Parser::args_expr(std::list<Token>::iterator& lex_pos) {
+
+	if (lex_pos == tokens.end())
+		return false;
+
+	auto start = lex_pos;
+	CurrentFunctionArgumentsCounter = 0;
+
+	if (value_expr(lex_pos)) {
+
+		CurrentFunctionArgumentsCounter++;
+
+		while (COMMA(lex_pos)) {
+			
+			CurrentFunctionArgumentsCounter++;
+
+			if (!value_expr(lex_pos)) 
+				return false;
+			
+		}
+	}
+
+	if (FunctionsArgumentsNumber[CurrentFunctionName] != CurrentFunctionArgumentsCounter)
+		return false;
+
 	return true;
 }
 
@@ -64,6 +201,22 @@ bool Parser::assign_expr(std::list<Token>::iterator &lex_pos) {
 	}
 	
 	return false;
+}
+
+bool Parser::func_expr(std::list<Token>::iterator& lex_pos) {
+
+	auto start = lex_pos;
+
+	if (lex_pos == tokens.end())
+		return false;
+
+	if (!FUNCTION(lex_pos) || !L_BR(lex_pos) || !args_expr(lex_pos) || !R_BR(lex_pos)) {
+
+		lex_pos = start;
+		return false;
+	}
+
+	return true;
 }
 
 bool Parser::value_expr(std::list<Token>::iterator &lex_pos) {
@@ -168,9 +321,11 @@ bool Parser::while_expr(std::list<Token>::iterator &lex_pos) {
 	return true;
 }
 
-bool Parser::list_expr(std::list<Token>::iterator &lex_pos) {
+bool Parser::return_expr(std::list<Token>::iterator& lex_pos) {
 
-	if (!VAR(lex_pos) || !POINT(lex_pos) || (!NO_ARG_LIST_FUNC(lex_pos) && !ONE_ARG_LIST_FUNC(lex_pos) && !TWO_ARG_LIST_FUNC(lex_pos)) || !END_ST(lex_pos))
+	auto start = lex_pos;
+
+	if (!RETURN_KW(lex_pos) || !value_expr(lex_pos) || !END_ST(lex_pos))
 		return false;
 
 	return true;
@@ -225,28 +380,57 @@ bool Parser::value(std::list<Token>::iterator &lex_pos) {
 
 	if (lex_pos == tokens.end())
 		return false;
-
-	if (VAR(lex_pos) && POINT(lex_pos)) {
-		
-		auto start = lex_pos;
-
-		if (WordCheck(lex_pos, "get") && L_BR(lex_pos) && value_expr(lex_pos) && R_BR(lex_pos))
-			return true;
-
-		else lex_pos = start;
-
-		if (WordCheck(lex_pos, "get_size") && L_BR(lex_pos) && R_BR(lex_pos))
-			return true;
-
-		return false;
-	}
+	
+	auto start = lex_pos;
 
 	if (VAR(lex_pos))
 		return true;
 	
 	if (DIGIT(lex_pos))
 		return true;
-	
+
+	if (func_expr(lex_pos) && FunctionsType[start->GetValue()] == "int")
+		return true;
+
+	return false;
+}
+
+bool Parser::DEFINE_KW(std::list<Token>::iterator& lex_pos) {
+
+	if (lex_pos == tokens.end())
+		return false;
+
+	if (lex_pos->GetType() == "DEFINE_KW") {
+		++lex_pos;
+		return true;
+	}
+
+	return false;
+}
+
+bool Parser::MAIN_KW(std::list<Token>::iterator& lex_pos) {
+
+	if (lex_pos == tokens.end())
+		return false;
+
+	if (lex_pos->GetType() == "MAIN_KW") {
+		++lex_pos;
+		return true;
+	}
+
+	return false;
+
+}
+
+bool Parser::DATA_TYPE(std::list<Token>::iterator& lex_pos) {
+
+	if (lex_pos == tokens.end())
+		return false;
+
+	if (lex_pos->GetType() == "DATA_TYPE") {
+		++lex_pos;
+		return true;
+	}
 
 	return false;
 }
@@ -290,45 +474,36 @@ bool Parser::WHILE_KW(std::list<Token>::iterator &lex_pos) {
 	return false;
 }
 
-bool Parser::NO_ARG_LIST_FUNC(std::list<Token>::iterator &lex_pos) {
+bool Parser::RETURN_KW(std::list<Token>::iterator& lex_pos) {
 
 	if (lex_pos == tokens.end())
 		return false;
 
-	if (lex_pos->GetType() == "NO_ARG_LIST_FUNC") {
+	if (lex_pos->GetType() == "RETURN_KW") {
 		++lex_pos;
-		if (L_BR(lex_pos) && R_BR(lex_pos))
-			return true;
+		return true;
 	}
 
 	return false;
 }
 
-bool Parser::ONE_ARG_LIST_FUNC(std::list<Token>::iterator &lex_pos) {
+bool Parser::FUNCTION(std::list<Token>::iterator& lex_pos) {
 
 	if (lex_pos == tokens.end())
 		return false;
 
-	if (lex_pos->GetType() == "ONE_ARG_LIST_FUNC") {
+	if (lex_pos->GetType() == "FUNCTION") {
+
+		if (FunctionsType.find(lex_pos->GetValue()) == FunctionsType.end())
+			if (!FunctionsType.insert({ lex_pos->GetValue(), std::prev(lex_pos, 1)->GetValue() }).second) {
+
+				std::cout << "Unable to store information about function" << std::endl;
+				return false;
+			}
+
+		CurrentFunctionName = lex_pos->GetValue();
 		++lex_pos;
-
-		if (L_BR(lex_pos) && value_expr(lex_pos) && R_BR(lex_pos))
-			return true;
-	}
-
-	return false;
-}
-
-bool Parser::TWO_ARG_LIST_FUNC(std::list<Token>::iterator &lex_pos) {
-
-	if (lex_pos == tokens.end())
-		return false;
-
-	if (lex_pos->GetType() == "TWO_ARG_LIST_FUNC") {
-		++lex_pos;
-		
-		if (L_BR(lex_pos) && value_expr(lex_pos) && COMMA(lex_pos) && value_expr(lex_pos) && R_BR(lex_pos))
-			return true;
+		return true;
 	}
 
 	return false;
@@ -478,19 +653,6 @@ bool Parser::R_FIG(std::list<Token>::iterator &lex_pos) {
 	return false;
 }
 
-bool Parser::POINT(std::list<Token>::iterator &lex_pos) {
-
-	if (lex_pos == tokens.end())
-		return false;
-
-	if (lex_pos->GetType() == "POINT") {
-		++lex_pos;
-		return true;
-	}
-
-	return false;
-}
-
 bool Parser::COMMA(std::list<Token>::iterator &lex_pos) {
 
 	if (lex_pos == tokens.end())
@@ -503,6 +665,8 @@ bool Parser::COMMA(std::list<Token>::iterator &lex_pos) {
 
 	return false;
 }
+
+std::unordered_map<std::string, int> Parser::GetFunctionsArgumentsNumber() { return FunctionsArgumentsNumber; }
 
 bool Parser::WordCheck(std::list<Token>::iterator &lex_pos, std::string word) {
 

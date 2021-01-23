@@ -18,5 +18,6 @@ public:
 
 	Token& operator = (const Token &tk);
 	friend std::ostream& operator << (std::ostream& os, const Token& tk);
+	friend bool operator!=(const Token& l, const Token& r);
 };
 

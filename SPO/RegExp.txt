@@ -1,25 +1,31 @@
 
-lang -> (assign_expr|while_expr|if_expr|list_expr)+
+program -> func_init_expr* + main_expr
 
-list_expr -> VAR POINT list_func
+func_init_expr -> DEFINE_KW DATA_TYPE FUNCTION L_BR args_init_expr R_BR L_FIG lang return_expr? R_FIG
+main_expr -> MAIN_KW L_BR R_BR L_FIG lang R_FIG
+
+lang -> (assign_expr|while_expr|if_expr|func_expr)*
+
+return_expr -> RETURN_KW value_expr END_ST
+args_init_expr -> VAR? | VAR (COMMA VAR)*
+args_expr -> value_expr? | value_expr (COMMA value_expr)*
+
 while_expr -> WHILE_KW L_BR logic_expr R_BR lang
 if_expr -> IF_KW L_BR logic_expr R_BR lang (else expr)?
 else_expr -> ELSE_KW lang
 assign_expr -> VAR ASSIGN_OP value_expr END_ST
 
-list_func -> (NO_ARG_LIST_FUNC |ONE_ARG_LIST_FUNC | TWO_ARG_LIST_FUNC) END_ST
-
-NO_ARG_LIST_FUNC -> (CREATE_LIST | POP_BACK | POP_FRONT | GET_SIZE) L_BR R_BR
-ONE_ARG_LIST_FUNC -> (PUSH_BACK | PUSH_FRONT | GET | REMOVE) L_BR value_expr R_BR
-TWO_ARG_LIST_FUNC -> INSERT L_BR value_expr COMMA value_expr R_BR
-
 logic_expr -> compare_expr (LOG_OP compare_expr)* | L_BR logic_expr R_BR
 comp_expr -> value_expr (COMP_OP value_expr)?
 
-value_expr -> value (OP value)* | L_BR value_expr R_BR | VAR POINT INSERT L_BR value_expr R_BR
-value -> VAR | DIGIT
+value_expr -> value (OP value)* | L_BR value_expr R_BR
+function_expr -> FUNCTION L_BR args_expr R_BR
+value -> VAR | DIGIT | function_expr
 
-VAR -> [a-zA-Z_]+[a-zA-Z0-9]*
+DATA_TYPE -> void | int
+
+FUNCTION -> [a-zA-Z_]+[a-zA-Z0-9_]*
+VAR -> [a-zA-Z_]+[a-zA-Z0-9_]*
 DIGIT -> 0|([1-9][0-9]*)
 
 ASSIGN_OP -> =
@@ -38,9 +44,11 @@ L_FIG -> {
 R_FIG -> }
 
 END_ST -> ;
-POINT -> .
 COMMA -> ,
 
 IF_KW -> if
 ELSE_KW -> else
 WHILE_KW -> while
+
+DEFINE_KW -> define
+MAIN_KW -> main

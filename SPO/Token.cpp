@@ -30,4 +30,9 @@ std::ostream& operator << (std::ostream& os, const Token& tk) {
 	return os;
 }
 
+bool operator!=(const Token& l, const Token& r) {
+	
+	return l.TokenType != r.TokenType || l.val != r.val;
+}
+
 Token::~Token(){}

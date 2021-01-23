@@ -1,2 +1,8 @@
 ﻿  RPN.cpp
-  SPO.vcxproj -> C:\Users\Boshist\source\repos\SPO\Debug\SPO.exe
+D:\Visual Studio\repos\SPO\RPN.cpp(393,17): warning C4018: >=: несоответствие типов со знаком и без знака
+  TriadOptimizer.cpp
+D:\Visual Studio\repos\SPO\TriadOptimizer.cpp(249,20): warning C4018: <: несоответствие типов со знаком и без знака
+  main.cpp
+  Создание кода...
+D:\Visual Studio\repos\SPO\TriadOptimizer.cpp(409): warning C4715: TriadOptimizer::Compute: значение возвращается не при всех путях выполнения
+  SPO.vcxproj -> D:\Visual Studio\repos\SPO\Debug\SPO.exe

@@ -11,7 +11,7 @@ bool Lexer::GenLexems() {
 
 	SkipSpaces(pos);
 
-	while (pos != RawInput.length() && ( VAR(pos) || DIGIT(pos) || ASSIGN_OP(pos) || OP(pos) || LOG_OP(pos) || COMP_OP(pos) || SYMBOLS(pos)))
+	while (pos != RawInput.length() && ( VAR(pos) || DIGIT(pos) || COMP_OP(pos) || OP(pos) || LOG_OP(pos) || ASSIGN_OP(pos) || SYMBOLS(pos)))
 		SkipSpaces(pos);
 
 	if (pos != RawInput.length()) {
@@ -19,13 +19,16 @@ bool Lexer::GenLexems() {
 		return false;
 	}
 
-	for (auto const &p : tokens)
-		std::cout << p << std::endl;
-
 	return true;
 }
 
 std::list<Token> Lexer::GetTokens() { return this->tokens; }
+
+void Lexer::PrintTokens() {
+
+	for (auto const& p : tokens)
+		std::cout << p << std::endl;
+}
 
 //Variable token
 bool Lexer::VAR(size_t &pos) {
@@ -44,8 +47,26 @@ bool Lexer::VAR(size_t &pos) {
 
 			pos++;
 
-		if (!KEYWORDS(RawInput.substr(start, pos - start)))
-			tokens.push_back(Token("VAR", RawInput.substr(start, pos - start)));
+		if (!KEYWORDS(RawInput.substr(start, pos - start)))	
+			if (tokens.back().GetType() == "DATA_TYPE") 
+
+				if (Functions.find(RawInput.substr(start, pos - start)) == Functions.end()) {
+
+					tokens.push_back(Token("FUNCTION", RawInput.substr(start, pos - start)));
+					Functions.insert(RawInput.substr(start, pos - start));
+				}
+
+				else
+					return false;								
+			
+			else 
+				if (Functions.find(RawInput.substr(start, pos - start)) == Functions.end()) 
+					tokens.push_back(Token("VAR", RawInput.substr(start, pos - start)));
+
+				else
+					tokens.push_back(Token("FUNCTION", RawInput.substr(start, pos - start)));	
+						
+
 		return true;
 	}
 
@@ -204,48 +225,29 @@ bool Lexer::KEYWORDS(std::string word) {
 		return true;
 	}
 
-	else if (word == "create_list") {
-		tokens.push_back(Token("NO_ARG_LIST_FUNC", "create_list"));
+	else if (word == "define") {
+		tokens.push_back(Token("DEFINE_KW", "define"));
 		return true;
 	}
 
-	else if (word == "pop_back") {
-		tokens.push_back(Token("NO_ARG_LIST_FUNC", "pop_back"));
+	else if (word == "main") {
+		tokens.push_back(Token("MAIN_KW", "main"));
 		return true;
 	}
 
-	else if (word == "pop_front") {
-		tokens.push_back(Token("NO_ARG_LIST_FUNC", "pop_front"));
+	else if (word == "return") {
+		tokens.push_back(Token("RETURN_KW", "return"));
 		return true;
 	}
 
-	else if (word == "get_size") {
-		tokens.push_back(Token("NO_ARG_LIST_FUNC", "get_size"));
+	//data types
+	else if (word == "void") {
+		tokens.push_back(Token("DATA_TYPE", "void"));
 		return true;
 	}
 
-	else if (word == "push_back") {
-		tokens.push_back(Token("ONE_ARG_LIST_FUNC", "push_back"));
-		return true;
-	}
-
-	else if (word == "push_front") {
-		tokens.push_back(Token("ONE_ARG_LIST_FUNC", "push_front"));
-		return true;
-	}
-
-	else if (word == "get") {
-		tokens.push_back(Token("ONE_ARG_LIST_FUNC", "get"));
-		return true;
-	}
-
-	else if (word == "remove") {
-		tokens.push_back(Token("ONE_ARG_LIST_FUNC", "remove"));
-		return true;
-	}
-
-	else if (word == "insert") {
-		tokens.push_back(Token("TWO_ARG_LIST_FUNC", "insert"));
+	else if (word == "int") {
+		tokens.push_back(Token("DATA_TYPE", "int"));
 		return true;
 	}
 
@@ -276,10 +278,6 @@ bool Lexer::SYMBOLS(size_t &pos) {
 		tokens.push_back(Token("END_ST", ";"));
 		break;
 
-	case '.':
-		tokens.push_back(Token("POINT", "."));
-		break;
-	
 	case ',':
 		tokens.push_back(Token("COMMA", ","));
 		break;

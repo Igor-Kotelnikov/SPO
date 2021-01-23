@@ -10,30 +10,43 @@ class Parser
 private:
 
 	std::list<Token> tokens;
-	std::unordered_map<std::string, int> variables;
+	std::unordered_map<std::string, std::string> FunctionsType;
+	std::unordered_map<std::string, int> FunctionsArgumentsNumber;
+
+	std::string CurrentFunctionName;
+	int CurrentFunctionArgumentsCounter;
 
 	bool lang(std::list<Token>::iterator &lex_pos);
+
+	bool func_define(std::list<Token>::iterator& lex_pos);
+	bool main_define(std::list<Token>::iterator& lex_pos);
+
+	bool func_init_expr(std::list<Token>::iterator& lex_pos);
+	bool args_init_expr(std::list<Token>::iterator& lex_pos);
+	bool args_expr(std::list<Token>::iterator& lex_pos);
 
 	bool assign_expr(std::list<Token>::iterator &lex_pos);
 	bool if_expr(std::list<Token>::iterator &lex_pos);
 	bool else_expr(std::list<Token>::iterator &lex_pos);
 	bool while_expr(std::list<Token>::iterator &lex_pos);
+	bool return_expr(std::list<Token>::iterator& lex_pos);
 
+	bool func_expr(std::list<Token>::iterator& lex_pos);
 	bool value_expr(std::list<Token>::iterator &lex_pos);
 	bool logic_expr(std::list<Token>::iterator &lex_pos);
 	bool comp_expr(std::list<Token>::iterator &lex_pos);
-	bool list_expr(std::list<Token>::iterator &lex_pos);
-
-	bool NO_ARG_LIST_FUNC(std::list<Token>::iterator &lex_pos);
-	bool ONE_ARG_LIST_FUNC(std::list<Token>::iterator &lex_pos);
-	bool TWO_ARG_LIST_FUNC(std::list<Token>::iterator &lex_pos);
 
 	bool value(std::list<Token>::iterator &lex_pos);
 
+	bool DEFINE_KW(std::list<Token>::iterator& lex_pos);
+	bool MAIN_KW(std::list<Token>::iterator& lex_pos);
+
 	bool IF_KW(std::list<Token>::iterator &lex_pos);
 	bool ELSE_KW(std::list<Token>::iterator &lex_pos);
-	bool WHILE_KW(std::list<Token>::iterator &lex_pos);	
+	bool WHILE_KW(std::list<Token>::iterator &lex_pos);
+	bool RETURN_KW(std::list<Token>::iterator& lex_pos);
 
+	bool FUNCTION(std::list<Token>::iterator& lex_pos);
 	bool VAR(std::list<Token>::iterator &lex_pos);
 	bool DIGIT(std::list<Token>::iterator &lex_pos);
 
@@ -50,8 +63,9 @@ private:
 	bool L_FIG(std::list<Token>::iterator &lex_pos);
 	bool R_FIG(std::list<Token>::iterator &lex_pos);
 
-	bool POINT(std::list<Token>::iterator &lex_pos);
 	bool COMMA(std::list<Token>::iterator &lex_pos);
+
+	bool DATA_TYPE(std::list<Token>::iterator& lex_pos);
 
 	bool WordCheck(std::list<Token>::iterator &lex_pos, std::string word);
 
@@ -59,6 +73,7 @@ public:
 
 	Parser(std::list<Token> token_list);
 	bool CheckSyntax();
+	std::unordered_map<std::string, int> GetFunctionsArgumentsNumber();
 	~Parser();
 
 };

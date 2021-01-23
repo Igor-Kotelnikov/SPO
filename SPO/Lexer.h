@@ -1,6 +1,6 @@
 #pragma once
-#include <unordered_map>
 #include <string>
+#include <set>
 #include <list>
 #include <iostream>
 
@@ -12,8 +12,8 @@ private:
 
 	std::string RawInput;
 
-	//variable table(int only)
-	std::unordered_map<std::string, int> ITable;
+	//Reserved function names
+	std::set<std::string> Functions;
 	
 	//Tokens
 	std::list<Token> tokens;
@@ -35,6 +35,7 @@ public:
 	~Lexer();
 
 	std::list<Token> GetTokens();
+	void PrintTokens();
 
 	bool GenLexems();
 };
